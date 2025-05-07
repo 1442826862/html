@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FPA 性格色彩测试</title>
+  <style>
+    body { font-family: sans-serif; background: #f9fafb; padding: 2rem; margin: 0; }
+    .container { max-width: 720px; margin: auto; background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    h1, h2 { text-align: center; }
+    .question { margin-bottom: 1rem; }
+    .options button { display: block; width: 100%; margin: 4px 0; padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; }
+    .options button.selected { background-color: #3b82f6; color: white; }
+    .submit-btn { width: 100%; margin-top: 20px; padding: 12px; font-size: 16px; background-color: #16a34a; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .result-list { list-style: none; padding: 0; }
+    .result-list li { margin: 8px 0; }
+    #chart-container { width: 100%; max-width: 400px; margin: 20px auto; }
+    footer { text-align: center; margin-top: 2rem; font-size: 0.9rem; color: #888; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>FPA 性格色彩测试</h1>
+    <p style="text-align:center">共30题，了解你的性格色彩组合</p>
+    <div id="quiz"></div>
+    <button class="submit-btn" onclick="submitQuiz()">提交查看结果</button>
+    <div id="result"></div>
+    <div id="chart-container"><canvas id="pieChart"></canvas></div>
+  </div>
+  <footer>由 FPA 性格色彩理论提供支持 | 版本 1.0</footer>
+
+  <script>
+    const questions = [
+      { question: '你更倾向于以下哪种行为风格？', options: [
+          { text: '快速做决定并推进', color: 'red' },
+          { text: '喜欢热闹、能带动气氛', color: 'yellow' },
+          { text: '做事谨慎，注重细节', color: 'blue' },
+          { text: '喜欢照顾别人感受', color: 'green' },
+        ]
+      },
+      { question: '别人最常说你：', options: [
+          { text: '你太强势了', color: 'red' },
+          { text: '你真有趣', color: 'yellow' },
+          { text: '你太认真了', color: 'blue' },
+          { text: '你人真好', color: 'green' },
+        ]
+      },
+      { question: '面对紧急情况，你更可能：', options: [
+          { text: '马上定方向，分配任务', color: 'red' },
+          { text: '鼓励大家、缓解情绪', color: 'yellow' },
+          { text: '仔细分析原因，避免重复', color: 'blue' },
+          { text: '体谅每个人的压力，避免冲突', color: 'green' },
+        ]
+      },
+      { question: '在聚会中，你通常：', options: [
+          { text: '主导话题', color: 'red' },
+          { text: '活跃气氛', color: 'yellow' },
+          { text: '倾听交流', color: 'blue' },
+          { text: '关心他人感受', color: 'green' },
+        ]
+      },
+      { question: '你更喜欢：', options: [
+          { text: '有明确目标的项目', color: 'red' },
+          { text: '富有创意的活动', color: 'yellow' },
+          { text: '有条理的流程', color: 'blue' },
+          { text: '团队协作的环境', color: 'green' },
+        ]
+      },
+      { question: '当需要反馈时，你会：', options: [
+          { text: '直接指出不足', color: 'red' },
+          { text: '引入幽默缓解', color: 'yellow' },
+          { text: '给出详细数据支持', color: 'blue' },
+          { text: '先肯定情感', color: 'green' },
+        ]
+      },
+      { question: '遇到分歧时，你倾向于：', options: [
+          { text: '据理力争', color: 'red' },
+          { text: '转换话题', color: 'yellow' },
+          { text: '冷静分析', color: 'blue' },
+          { text: '寻找共识', color: 'green' },
+        ]
+      },
+      { question: '分配任务时，你：', options: [
+          { text: '快速决策', color: 'red' },
+          { text: '调动积极性', color: 'yellow' },
+          { text: '细化每一步', color: 'blue' },
+          { text: '考虑成员感受', color: 'green' },
+        ]
+      },
+      { question: '面对截止日期，你：', options: [
+          { text: '冲刺完成', color: 'red' },
+          { text: '召集团队加油', color: 'yellow' },
+          { text: '详细计划', color: 'blue' },
+          { text: '关注团队压力', color: 'green' },
+        ]
+      },
+      { question: '在会议中，你：', options: [
+          { text: '带领讨论', color: 'red' },
+          { text: '活跃气氛', color: 'yellow' },
+          { text: '做会议纪要', color: 'blue' },
+          { text: '关注发言者情绪', color: 'green' },
+        ]
+      },
+      { question: '面对变化，你：', options: [
+          { text: '迅速调整', color: 'red' },
+          { text: '保持乐观', color: 'yellow' },
+          { text: '评估风险', color: 'blue' },
+          { text: '照顾他人适应', color: 'green' },
+        ]
+      },
+      { question: '你更关注：', options: [
+          { text: '项目结果', color: 'red' },
+          { text: '团队氛围', color: 'yellow' },
+          { text: '工作流程', color: 'blue' },
+          { text: '人际关系', color: 'green' },
+        ]
+      },
+      { question: '规则对你来说：', options: [
+          { text: '可适当突破', color: '.yellow' },
+          { text: '提供创意框架', color: 'yellow' },
+          { text: '必须遵守', color: 'blue' },
+          { text: '为大家安全考虑', color: 'green' },
+        ]
+      },
+      { question: '你在社交媒体上：', options: [
+          { text: '领导话题', color: 'red' },
+          { text: '发布趣味内容', color: 'yellow' },
+          { text: '分享深度分析', color: 'blue' },
+          { text: '与朋友互动', color: 'green' },
+        ]
+      },
+      { question: '团队项目中，你：', options: [
+          { text: '承担领导角色', color: 'red' },
+          { text: '负责创意', color: 'yellow' },
+          { text: '做数据和研究', color: 'blue' },
+          { text: '协调沟通', color: 'green' },
+        ]
+      },
+      { question: '你觉得自己更：', options: [
+          { text: '自信果断', color: 'red' },
+          { text: '开朗外向', color: 'yellow' },
+          { text: '细心谨慎', color: 'blue' },
+          { text: '耐心温和', color: 'green' },
+        ]
+      },
+      { question: '面对压力，你：', options: [
+          { text: '集中能量解决', color: 'red' },
+          { text: '找人聊天释放', color: 'yellow' },
+          { text: '制定详细计划', color: 'blue' },
+          { text: '寻求支持和理解', color: 'green' },
+        ]
+      },
+      { question: '获取信息时，你：', options: [
+          { text: '直接询问结果', color: 'red' },
+          { text: '通过互动了解', color: 'yellow' },
+          { text: '查阅资料', color: 'blue' },
+          { text: '与人交流获取', color: 'green' },
+        ]
+      },
+      { question: '你更倾向长远计划还是短期行动？', options: [
+          { text: '短期冲刺', color: 'red' },
+          { text: '随机应变', color: 'yellow' },
+          { text: '详细规划', color: 'blue' },
+          { text: '关注过程中的人', color: 'green' },
+        ]
+      },
+      { question: '当他人成功，你：', options: [
+          { text: '赞赏成就', color: 'red' },
+          { text: '兴奋庆祝', color: 'yellow' },
+          { text: '分析成功原因', color: 'blue' },
+          { text: '感同身受', color: 'green' },
+        ]
+      },
+      { question: '当面对新任务时，你：', options: [
+          { text: '迅速动手', color: 'red' },
+          { text: '集思广益', color: 'yellow' },
+          { text: '评估可行性', color: 'blue' },
+          { text: '考虑团队接受度', color: 'green' },
+        ]
+      },
+      { question: '你觉得最有动力的是：', options: [
+          { text: '达成目标', color: 'red' },
+          { text: '被认可', color: 'yellow' },
+          { text: '掌握技能', color: 'blue' },
+          { text: '帮助他人', color: 'green' },
+        ]
+      },
+      { question: '收到批评时，你：', options: [
+          { text: '据理反驳', color: 'red' },
+          { text: '幽默化解', color: 'yellow' },
+          { text: '反思改进', color: 'blue' },
+          { text: '关注情感层面', color: 'green' },
+        ]
+      },
+      { question: '你对风险的态度是：', options: [
+          { text: '敢于冒险', color: 'red' },
+          { text: '认为挑战有趣', color: 'yellow' },
+          { text: '规避风险', color: 'blue' },
+          { text: '风险需照顾他人', color: 'green' },
+        ]
+      },
+      { question: '你更看重：工作成果还是同事关系？', options: [
+          { text: '成果', color: 'red' },
+          { text: '氛围', color: 'yellow' },
+          { text: '流程', color: 'blue' },
+          { text: '关系', color: 'green' },
+        ]
+      },
+      { question: '在团队中，你更愿意：', options: [
+          { text: '领导并决策', color: 'red' },
+          { text: '带来创意', color: 'yellow' },
+          { text: '提供分析', color: 'blue' },
+          { text: '维护和谐', color: 'green' },
+        ]
+      },
+      { question: '结束审查后，你更关注：', options: [
+          { text: '下一步计划', color: 'red' },
+          { text: '分享经验', color: 'yellow' },
+          { text: '总结数据', color: 'blue' },
+          { text: '团队感受', color: 'green' },
+        ]
+      },
+      { question: '你更喜欢：', options: [
+          { text: '直奔主题', color: 'red' },
+          { text: '互动交流', color: 'yellow' },
+          { text: '条理分明', color: 'blue' },
+          { text: '温暖关怀', color: 'green' },
+        ]
+      },
+      { question: '准备演讲时，你：', options: [
+          { text: '重点突出', color: 'red' },
+          { text: '调动氛围', color: 'yellow' },
+          { text: '精心打磨稿件', color: 'blue' },
+          { text: '关注听众反应', color: 'green' },
+        ]
+      },
+    ];
+
+    const answers = {};
+
+    function renderQuiz() {
+      const quizEl = document.getElementById('quiz');
+      quizEl.innerHTML = '';
+      questions.forEach((q, index) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'question';
+        qDiv.innerHTML = `<strong>${index + 1}. ${q.question}</strong>`;
+        const optsDiv = document.createElement('div'); optsDiv.className = 'options';
+        q.options.forEach((opt) => {
+          const btn = document.createElement('button');
+          btn.textContent = opt.text;
+          btn.onclick = () => { answers[index] = opt.color; renderQuiz(); };
+          if (answers[index] === opt.color) btn.classList.add('selected');
+          optsDiv.appendChild(btn);
+        });
+        qDiv.appendChild(optsDiv); quizEl.appendChild(qDiv);
+      });
+    }
+
+    function submitQuiz() {
+      if (Object.keys(answers).length !== questions.length) {
+        alert('请完成所有题目后再提交'); return;
+      }
+      const scores = { red: 0, yellow: 0, blue: 0, green: 0 };
+      Object.values(answers).forEach(c => scores[c]++);
+      const total = Object.values(scores).reduce((a,b)=>a+b,0);
+      const labels = ['红色', '黄色', '蓝色', '绿色'];
+      const data = [scores.red, scores.yellow, scores.blue, scores.green];
+      // 显示列表
+      const resultHtml = `<h2>你的性格色彩占比</h2><ul class="result-list">${labels.map((l,i)=>`<li>${
+        l}：${((data[i]/total)*100).toFixed(1)}%</li>`).join('')}</ul>`;
+      document.getElementById('result').innerHTML = resultHtml;
+      document.getElementById('quiz').style.display = 'none';
+      document.querySelector('.submit-btn').style.display = 'none';
+      // 绘制饼图
+      const ctx = document.getElementById('pieChart').getContext('2d');
+      new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: ['#ef4444','#facc15','#3b82f6','#22c55e'] }] } });
+    }
+
+    renderQuiz();
+  </script>
+</body>
+</html>
