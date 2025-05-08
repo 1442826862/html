@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>FPA 性格色彩测试 - 结果</title>
+  <style>
+    body { font-family: sans-serif; background: #f9fafb; padding: 2rem; margin: 0; }
+    .container { max-width: 720px; margin: auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    h1, h2 { text-align: center; }
+    #percentDisplay { text-align: center; font-size: 1.2rem; margin: 1rem 0; }
+    #historyList { list-style: none; padding: 0; }
+    #historyList li { margin: 0.5rem 0; font-size: 0.9rem; }
+    #chart-container { width: 100%; max-width: 400px; margin: 0 auto 2rem; }
+    .clear-btn {
+      display: block; margin: 1rem auto; padding: 0.5rem 1rem;
+      background: #f87171; color: #fff; border: none;
+      border-radius: 6px; cursor: pointer;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>测试结果</h1>
+    <p id="greeting"></p>
+    <div id="chart-container"><canvas id="resultChart"></canvas></div>
+    <div id="percentDisplay"></div>
+
+    <h2>历史记录</h2>
+    <ul id="historyList"></ul>
+    <button class="clear-btn" onclick="clearHistory()">清空历史记录</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name') || '匿名';
+    document.getElementById('greeting').textContent = `你好，${name}，以下是你的测试结果：`;
+
+    const data = JSON.parse(localStorage.getItem('fpa_result') || '{}');
+
+    const ctx = document.getElementById('resultChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['红色', '黄色', '蓝色', '绿色'],
+        datasets: [{
+          data: [data.red || 0, data.yellow || 0, data.blue || 0, data.green || 0],
+          backgroundColor: ['#ef4444', '#facc15', '#3b82f6', '#22c55e'],
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+          },
+        },
+      },
+    });
+
+    document.getElementById('percentDisplay').textContent =
+      `红色：${data.red || 0}%   黄色：${data.yellow || 0}%   蓝色：${data.blue || 0}%   绿色：${data.green || 0}%`;
+
+    const now = new Date().toLocaleString();
+    const history = JSON.parse(localStorage.getItem('fpa_history') || '[]');
+    history.push({ timestamp: now, ...data });
+    localStorage.setItem('fpa_history', JSON.stringify(history));
+
+    const historyList = document.getElementById('historyList');
+    history.slice().reverse().forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.timestamp} — 红${entry.red || 0}%，黄${entry.yellow || 0}%，蓝${entry.blue || 0}%，绿${entry.green || 0}%`;
+      historyList.appendChild(li);
+    });
+
+    function clearHistory() {
+      if (confirm('确定要清空所有历史记录吗？')) {
+        localStorage.removeItem('fpa_history');
+        historyList.innerHTML = '';
+		   const params = new URLSearchParams(window.location.search);
+  const name = params.get('name') || '匿名';
+  const data = JSON.parse(localStorage.getItem('fpa_result') || '{}');
+
+  // 2. 你的公开分享链接（复制飞书给你的完整分享 URL）
+  const shareLink = 'https://ybren1117.feishu.cn/base/IyyZbpjdbaU6ePsIudvcCukynpg';
+
+  // 3. 用 URL 接口方便地拼接参数
+  const formUrl = new URL(shareLink);
+
+  // 4. 如果链接里已有 query 参数，URL 对象会保留它们；接着再添加你的字段
+  formUrl.searchParams.set('姓名', name);
+  formUrl.searchParams.set('红色', data.red || 0);
+  formUrl.searchParams.set('黄色', data.yellow || 0);
+  formUrl.searchParams.set('蓝色', data.blue || 0);
+  formUrl.searchParams.set('绿色', data.green || 0);
+  formUrl.searchParams.set('测试时间', new Date().toLocaleString());
+
+  // 5. 跳转到飞书表单
+  window.location.replace(formUrl.toString());
+      }
+    }
+  </script>
+</body>
+</html>
